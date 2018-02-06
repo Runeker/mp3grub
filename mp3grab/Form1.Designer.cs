@@ -187,7 +187,7 @@ namespace mp3grab
             this.status_label.Font = new System.Drawing.Font("Lucida Console", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.status_label.Name = "status_label";
             this.status_label.Size = new System.Drawing.Size(89, 17);
-            this.status_label.Text = "mp3grab v1.1";
+            this.status_label.Text = "mp3grab v1.2";
             // 
             // statusStrip1
             // 

@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Linq;
 using System.Data;
+using System.Collections.Generic;
 
 namespace mp3grab
 {
@@ -31,14 +32,15 @@ namespace mp3grab
         {
             try
             {
+                //находим все мп3 и запихиваем в массив
                 files_listbox.Items.Clear();
                 var files = Directory.EnumerateFiles(path_Textbox.Text, "*.mp3", SearchOption.TopDirectoryOnly);
                 foreach (string dir in files)
                 {
-                    Console.WriteLine(dir);
                     files_listbox.Items.Add(dir);
                 }
             }
+
             catch (Exception ex)
             {
                 status_label.Text = ex.Message;
@@ -55,20 +57,35 @@ namespace mp3grab
                                                             + album_textBox2.Text.ToString() + "\\";
                 Directory.CreateDirectory(directory);
 
+                //лист треков
+                List<FileInfo> songs = new List<FileInfo>();
+
+                //добавим выделенные
                 foreach (var song in files_listbox.SelectedItems)
                 {
-                    
-                    TagLib.File tagFile = TagLib.File.Create(song.ToString());
+                    songs.Add(new FileInfo(song.ToString()));
+                }
+
+                //отсортируем по дате
+                List<FileInfo> sortedSongs = songs.OrderBy(o => o.CreationTime).ToList();
+
+                for (int i = 0; i < sortedSongs.Count; i++)
+                {
+                    //реализуем библиотеку таглиб, для работы с тегами
+                    TagLib.File tagFile = TagLib.File.Create(sortedSongs[i].ToString());
 
                     tagFile.Tag.Performers = new string[] { artist_textBox.Text }; // исполнитель
                     tagFile.Tag.Album = album_textBox2.Text; // альбом
                     tagFile.Tag.Year = Convert.ToUInt16(year_textbox.Text.ToString()); // год
-                    string title = song.ToString().Substring(song.ToString().LastIndexOf('-') + 2);
-                    tagFile.Tag.Title = title.Remove(title.ToString().LastIndexOf('.'));
-                    tagFile.Save();
+                    string title = sortedSongs[i].ToString().Substring(sortedSongs[i].ToString().LastIndexOf('-') + 2);
+                    tagFile.Tag.Title = title.Remove(title.ToString().LastIndexOf('.')); // название песни
+                    tagFile.Tag.Track = (uint)i + 1; //номер трека
 
-                    FileInfo t = new FileInfo(song.ToString());
-                    File.Move(song.ToString(), directory + t.Name);
+                    tagFile.Save(); //сохраним
+
+                    //перемещаем в нужный путь.
+                    FileInfo t = new FileInfo(sortedSongs[i].ToString());
+                    File.Move(sortedSongs[i].ToString(), directory + tagFile.Tag.Track + " - " + tagFile.Tag.Title + ".mp3");
                 }
 
                 status_label.Text = "done";
@@ -80,7 +97,6 @@ namespace mp3grab
             }
             
         }
-
 
         private void files_listbox_SelectedValueChanged(object sender, EventArgs e)
         {
